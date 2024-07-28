@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils"
 import { Inter as FontSans } from "next/font/google"
 import ThemeWrapper from "@/components/ThemeProvider";
+import { Toaster } from "react-hot-toast";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
           fontSans.variable
         )}
         >
+          <Toaster/>
           <ThemeWrapper>
             {children}
           </ThemeWrapper>

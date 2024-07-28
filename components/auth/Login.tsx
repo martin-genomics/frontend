@@ -6,22 +6,68 @@ import Link from "next/link";
 import { IconButton } from "@material-tailwind/react";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
-
-
+import { axiosPublicInstance } from "@/plugins/axios";
+import AuthAPI, { userLoginAtom } from "@/stores/authStore";
+import { useAtom } from "jotai";
+import validator from "validator";
 import login1 from "@/public/auth/login1.png";
 import login2 from "@/public/auth/login-img-1.webp";
 import login3 from "@/public/auth/login-img-6.webp";
 import login4 from "@/public/auth/login-img-5.webp";
 import wave from "@/public/auth/wave.png";
 import { useState } from "react";
+import { LoginPayload } from "@/types/auth";
+import { toast } from 'react-hot-toast'
+import { isPasswordValid } from "@/lib/validators";
 
-
-
+import { useRouter } from 'next/navigation'
 
 export default function Login(){
     const [isLoading, setLoading] = useState<boolean>(false)
     // const { getFieldState, getValues } = useFormContext();
-    const form = useForm()
+
+    const [emailError, setEmailError] = useState({ state: false, message: '' });
+    const [passwordError, setPasswordError] = useState({ state: false, message: '' });
+    const router = useRouter();
+
+    
+    const {
+        handleSubmit,
+        register
+    } = useForm<LoginPayload>()
+
+
+
+    const onSubmit = async ( { email, password } : LoginPayload) => {
+        setLoading(true)
+        if (!isPasswordValid(password)) {
+            setPasswordError({ state: true, message: 'The password does not meet the criteria.' });
+            setLoading(false);
+            return 0
+        }
+
+        if (!validator.isEmail(email)) {
+            setEmailError({ state: true, message: 'The email is invalid.' });
+            setLoading(false);
+
+            return 0;
+        }
+
+        try {
+
+            await AuthAPI.loginUser( { email, password});
+            toast.success('Login success')
+            setLoading(false)
+            router.push('/dashboard')
+
+            
+        } catch(error) {
+            setPasswordError({ state: true, message: error as string});
+            toast.error(error as string)
+            setLoading(false)
+
+        }
+    }
 
     return (
         <div className="w-full h-screen flex items-center flex-col justify-center bg-[url('../public/auth/bg.png')] bg-cover">
@@ -118,10 +164,10 @@ export default function Login(){
                         <hr className="w-28 my-3.5 mx-1 border-[1.5px] border-dashed border-gray-400" />
                     </div>
                     {/* Login form */}
-                    <form className="grid grid-cols-1 gap-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4">
                         
-                        <Input  type='email' label="Email Address" size="lg"  className="h-[3.5em]" />
-                        <Input type='password' label="Password" size='lg' className="h-[3.5em]"/>
+                        <Input error={emailError.state} {...register('email')} type='email' label="Email Address" size="lg"  className="h-[3.5em]" />
+                        <Input error={passwordError.state} {...register('password')} type='password' label="Password" size='lg' className="h-[3.5em]"/>
                         <p>
                             <Link href={'/forgot-password'}>
                                 <span className="text-sm text-blue-400">
@@ -133,7 +179,7 @@ export default function Login(){
                         <MoonLoader size={32} className="mx-auto" />
                         :
 
-                        <Button size='md' className="normal-case font-medium bg-primary">
+                        <Button type='submit' size='md' className="normal-case font-medium bg-primary">
                             Login
                         </Button>
                         }
